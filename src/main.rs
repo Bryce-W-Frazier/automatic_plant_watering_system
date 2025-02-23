@@ -13,9 +13,9 @@
 use panic_halt as _;
 
 use arduino_hal::prelude::_unwrap_infallible_UnwrapInfallible;
-//use arduino_hal::port::Pins;
-use arduino_hal::port::Pin;
-use arduino_hal::port::mode;
+use arduino_hal::port; // for pin numbers D7, D3, etc., idealy this gets fixed
+use arduino_hal::port::Pin; 
+use arduino_hal::port::mode; 
 use arduino_hal::port::mode::PullUp;
 use ufmt::uwriteln;
 
@@ -24,7 +24,7 @@ use ufmt::uwriteln;
 /// overflow_alarm
 /// checks if pot is overflowing, if so returns a flag set to true, 
 /// otherwise false.
-fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>>) -> bool {
+fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>, port::D3>) -> bool {
     if sensor_pin.is_low() { 
         return true;
     } 
@@ -35,8 +35,8 @@ fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>>) -> bool {
 /// checks if the water reservoir is low, if so then returns a flag set
 /// to true and turns on a indactor led, otherwise flag is false and
 /// the led will be turned off.
-fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>>, 
-    led_pin: &mut Pin<mode::Output>) -> bool {
+fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>, port::D4>, 
+    led_pin: &mut Pin<mode::Output, port::D2>) -> bool {
 
     if sensor_pin.is_high() {
         led_pin.set_high();
@@ -51,8 +51,8 @@ fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>>,
 /// Manages the pump, regulates how much water is pumped and when
 /// water and be pumped.
 struct Pump {
-    switch_pin: Pin<mode::Output>,
-    flow_rate_Liter_Sec: u8,
+    switch_pin: Pin<mode::Output, port::D7>,
+    flow_rate_liter_sec: u8,
 }
 
 impl Pump {
@@ -61,8 +61,8 @@ impl Pump {
     /// in the pot basied from the pump's flow rate and size of pot. 
     /// Will check that no alarms relating to flooding or an empty are 
     /// present during and before excution.
-    fn water_plant() {
-
+    fn water_plant(&mut self) {
+        self.switch_pin.set_high();
     }
 
     /// stop_pump
@@ -80,44 +80,39 @@ fn main() -> ! {
     let mut adc = arduino_hal::Adc::new(dp.ADC, Default::default());
 
     //Control/Input pins for devices
-    let mut pump = pins.d7.into_output();
+    let pump_switch = pins.d7.into_output();
     let mut error_led = pins.d2.into_output();
     let soil_prob = pins.a0.into_analog_input(&mut adc);
     let overflow_detector = pins.d3.into_pull_up_input();
     let tank_low = pins.d4.into_pull_up_input();
+
+    //Init objects
+    let mut pump = Pump {
+        switch_pin: pump_switch,
+        flow_rate_liter_sec: 1,
+    };
     
     //Init serial
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
 
-    
-
-
     loop {
+        //Get soil moisture and print to serial
         let input = soil_prob.analog_read(&mut adc);
         uwriteln!(&mut serial, "{}", input)
             .unwrap_infallible();
 
-        //Stop if plant pot is overflowing
-        while overflow_detector.is_low() {
-            pump.set_low(); // to insure pump is off
-            uwriteln!(&mut serial, "Error:\tContainer Overflow")
-                .unwrap_infallible();
-            arduino_hal::delay_ms(100);
-        }
+       //Shut down pump If needed
+       while overflow_alarm(&overflow_detector) 
+        | tank_low_alarm(&tank_low, &mut error_led) {
 
-        while tank_low.is_high() {
-            pump.set_low(); // to insure pump is off
-            error_led.set_high();
-            uwriteln!(&mut serial, "Error:\tTank is empty")
-                .unwrap_infallible();
-            arduino_hal::delay_ms(100);
-            error_led.set_low();
-        }
+          pump.stop_pump();
+        } 
 
+        //run pump when soil is dry
         if input < 256 {
-            pump.set_high();
+            pump.water_plant();
         } else {
-            pump.set_low();
+            pump.stop_pump();
         }
     }
 }
