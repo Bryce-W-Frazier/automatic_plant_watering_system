@@ -51,7 +51,7 @@ fn main() -> ! {
     // checks if the water reservoir is low, if so then returns a flag set
     // to true and turns on a indactor led, otherwise flag is false and
     // the led will be turned off.
-    fn tank_low_alarm<MODE>(sensor_pin: &Pin<mode::Input::<PullUp>>, 
+    fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>>, 
         led_pin: &mut Pin<mode::Output>) -> bool {
 
         if sensor_pin.is_high() {
