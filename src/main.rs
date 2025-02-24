@@ -17,9 +17,9 @@ use arduino_hal::port::mode;
 use arduino_hal::port::mode::PullUp;
 use ufmt::uwriteln;
 
-/// # alarm functions
-///
-/// overflow_alarm
+//  alarm functions
+//
+//  overflow_alarm
 /// checks if pot is overflowing, if so returns a flag set to true, 
 /// otherwise false.
 fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>, port::D3>) -> bool {
@@ -29,7 +29,7 @@ fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>, port::D3>) -> bool {
     return false;
 }
 
-/// tank_low_alarm
+//  tank_low_alarm
 /// checks if the water reservoir is low, if so then returns a flag set
 /// to true and turns on a indactor led, otherwise flag is false and
 /// the led will be turned off.
@@ -44,17 +44,17 @@ fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>, port::D4>,
     return false;
 }
 
-/// # Pump
-/// 
+// Pump
+// 
 /// Manages the pump, regulates how much water is pumped and when
-/// water and be pumped.
+/// water can be pumped.
 struct Pump {
     switch_pin: Pin<mode::Output, port::D7>,
     flow_rate_liter_sec: u8,
 }
 
 impl Pump {
-    /// water_plant
+    //  water_plant
     /// Run the pump long anough to get the approximate proper amount of water 
     /// in the pot basied from the pump's flow rate and size of pot. 
     /// Will check that no alarms relating to flooding or an empty are 
@@ -64,7 +64,7 @@ impl Pump {
         //
     }
 
-    /// stop_pump
+    //  stop_pump
     /// Cuts stops the pump, may be called if the pump is running or not.
     fn stop_pump(&mut self) {
         self.switch_pin.set_low();
