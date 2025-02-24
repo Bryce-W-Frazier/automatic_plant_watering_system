@@ -4,7 +4,7 @@ Automatic Plant Watering System
 By Bryce W. Frazier and Joey Kirnan
 
 Rust project for the _Arduino Uno_, _CS241_ 2025 Spring at UAF. Full documentation can be aquired by running 
-`cargo doc --open` in a dir.
+`cargo doc --open` in the repo directory.
 
 
 ## Build Instructions

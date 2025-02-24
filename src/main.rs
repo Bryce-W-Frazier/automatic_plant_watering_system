@@ -17,6 +17,7 @@ use arduino_hal::port::mode;
 use arduino_hal::port::mode::PullUp;
 use ufmt::uwriteln;
 
+
 //  alarm functions
 //
 //  overflow_alarm
@@ -54,9 +55,10 @@ struct Pump {
 }
 
 impl Pump {
-    //  water_plant
+    //  water_plant  
     /// Run the pump long anough to get the approximate proper amount of water 
     /// in the pot basied from the pump's flow rate and size of pot. 
+    /// <div class="warning"> Emergency shut off not implemnted </div>
     /// Will check that no alarms relating to flooding or an empty are 
     /// present during and before excution.
     fn water_plant(&mut self) {
@@ -78,12 +80,19 @@ fn main() -> ! {
     let pins = arduino_hal::pins!(dp);
     let mut adc = arduino_hal::Adc::new(dp.ADC, Default::default());
 
-    //Control/Input pins for devices
-    let pump_switch = pins.d7.into_output();
-    let mut error_led = pins.d2.into_output();
-    let soil_prob = pins.a0.into_analog_input(&mut adc);
-    let overflow_detector = pins.d3.into_pull_up_input();
-    let tank_low = pins.d4.into_pull_up_input();
+    // Control/Input pins for devices
+    // If pins are changed here don't forget to document it in 
+    // README.md
+    let pump_switch = pins
+        .d7.into_output();
+    let mut error_led = pins
+        .d2.into_output();
+    let soil_prob = pins
+        .a0.into_analog_input(&mut adc);
+    let overflow_detector = pins
+        .d3.into_pull_up_input();
+    let tank_low = pins
+        .d4.into_pull_up_input();
 
     //Init objects
     let mut pump = Pump {
