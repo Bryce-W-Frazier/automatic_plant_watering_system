@@ -1,12 +1,10 @@
-//! Automatic Plant Wating System
+#![doc = include_str!("../README.md")]
+//! # _main.rs_ Info
 //!
-//! main.rs (rustc 1.79.0-nightly)
-//!
-//! By: Bryce W. Frazier, Joey
-//!
-//! Started: 2025-02-21 Updated: 2025-02-22
-//!
-//! Main file for CS241 project, automatic plant wating system
+//! - rustc 1.79.0-nightly
+//! - By: Bryce W. Frazier, Joey Kirnan
+//! - Started: 2025-02-21 Updated: 2025-02-23
+//! - Main file for CS241 project, automatic plant wating system
 #![no_std]
 #![no_main]
 
@@ -62,7 +60,8 @@ impl Pump {
     /// Will check that no alarms relating to flooding or an empty are 
     /// present during and before excution.
     fn water_plant(&mut self) {
-        self.switch_pin.set_high();
+        self.switch_pin.set_high(); // TODO Dummy
+        //
     }
 
     /// stop_pump
@@ -101,9 +100,9 @@ fn main() -> ! {
         uwriteln!(&mut serial, "{}", input)
             .unwrap_infallible();
 
-       //Shut down pump If needed
-       while overflow_alarm(&overflow_detector) 
-        | tank_low_alarm(&tank_low, &mut error_led) {
+        //Shut down pump If needed
+        while overflow_alarm(&overflow_detector) |
+        tank_low_alarm(&tank_low, &mut error_led) {
 
           pump.stop_pump();
         } 
