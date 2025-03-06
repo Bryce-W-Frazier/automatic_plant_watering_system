@@ -13,8 +13,8 @@ use panic_halt as _;
 use arduino_hal::prelude::_unwrap_infallible_UnwrapInfallible;
 use arduino_hal::port; // for pin numbers D7, D3, etc., idealy this gets fixed
 use arduino_hal::port::Pin; 
-use arduino_hal::port::mode; 
-use arduino_hal::port::mode::PullUp;
+use arduino_hal::port::PinOps; 
+use arduino_hal::port::mode::{PullUp, Output, Input};
 use ufmt::uwriteln;
 
 
@@ -23,7 +23,7 @@ use ufmt::uwriteln;
 //  overflow_alarm
 /// checks if pot is overflowing, if so returns a flag set to true, 
 /// otherwise false.
-fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>, port::D3>) -> bool {
+fn overflow_alarm(sensor_pin: &Pin<Input<PullUp>, port::D3>) -> bool {
     if sensor_pin.is_low() { 
         return true;
     } 
@@ -34,8 +34,8 @@ fn overflow_alarm(sensor_pin: &Pin<mode::Input<PullUp>, port::D3>) -> bool {
 /// checks if the water reservoir is low, if so then returns a flag set
 /// to true and turns on a indactor led, otherwise flag is false and
 /// the led will be turned off.
-fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>, port::D4>, 
-    led_pin: &mut Pin<mode::Output, port::D2>) -> bool {
+fn tank_low_alarm(sensor_pin: &Pin<Input::<PullUp>, port::D4>, 
+    led_pin: &mut Pin<Output, port::D2>) -> bool {
 
     if sensor_pin.is_high() {
         led_pin.set_high();
@@ -49,12 +49,12 @@ fn tank_low_alarm(sensor_pin: &Pin<mode::Input::<PullUp>, port::D4>,
 // 
 /// Manages the pump, regulates how much water is pumped and when
 /// water can be pumped.
-struct Pump {
-    switch_pin: Pin<mode::Output, port::D7>,
+struct Pump<PinNum> {
+    switch_pin: Pin<Output, PinNum>,
     flow_rate_liter_sec: u8,
 }
 
-impl Pump {
+impl<PinNum: PinOps> Pump<PinNum> {
     //  water_plant  
     /// Run the pump long anough to get the approximate proper amount of water 
     /// in the pot basied from the pump's flow rate and size of pot. 
@@ -72,6 +72,11 @@ impl Pump {
         self.switch_pin.set_low();
     }
 }
+
+//  soil_sensor
+//
+/// Controls power to the soil sensor, and outputs reading
+ 
 
 #[arduino_hal::entry]
 fn main() -> ! {
@@ -95,7 +100,7 @@ fn main() -> ! {
         .d4.into_pull_up_input();
 
     //Init objects
-    let mut pump = Pump {
+    let mut pump = Pump::<port::D7> {
         switch_pin: pump_switch,
         flow_rate_liter_sec: 1,
     };
@@ -117,7 +122,7 @@ fn main() -> ! {
         } 
 
         //run pump when soil is dry
-        if input < 256 {
+        if input < 725 {
             pump.water_plant();
         } else {
             pump.stop_pump();
