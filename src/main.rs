@@ -3,7 +3,7 @@
 //!
 //! - rustc 1.79.0-nightly
 //! - By: Bryce W. Frazier, Joey Kirnan
-//! - Started: 2025-02-21 Updated: 2025-02-23
+//! - Started: 2025-02-21 Updated: 2025-03-05
 //! - Main file for CS241 project, automatic plant wating system
 #![no_std]
 #![no_main]
@@ -11,12 +11,15 @@
 use panic_halt as _;
 
 use arduino_hal::prelude::_unwrap_infallible_UnwrapInfallible;
+use arduino_hal::delay_ms;
+use arduino_hal::adc::AdcChannel;
+use arduino_hal::hal;
+use arduino_hal::pac;
 use arduino_hal::port; // for pin numbers D7, D3, etc., idealy this gets fixed
 use arduino_hal::port::Pin; 
 use arduino_hal::port::PinOps; 
-use arduino_hal::port::mode::{PullUp, Output, Input};
+use arduino_hal::port::mode::{Analog, PullUp, Output, Input}; 
 use ufmt::uwriteln;
-
 
 //  alarm functions
 //
@@ -55,6 +58,7 @@ struct Pump<PinNum> {
 }
 
 impl<PinNum: PinOps> Pump<PinNum> {
+
     //  water_plant  
     /// Run the pump long anough to get the approximate proper amount of water 
     /// in the pot basied from the pump's flow rate and size of pot. 
@@ -73,9 +77,31 @@ impl<PinNum: PinOps> Pump<PinNum> {
     }
 }
 
-//  soil_sensor
+/*.//  SoilSensor
 //
 /// Controls power to the soil sensor, and outputs reading
+struct SoilSensor<PowerPinNum, DataPinNum> {
+    power_pin: Pin<Output, PowerPinNum>,
+    data_pin:  Pin<Analog, DataPinNum>,
+    adc:       arduino_hal::Adc,
+}
+
+impl<PowerPinNum: PinOps, DataPinNum: PinOps + AdcChannel<hal::Atmega, pac::ADC>> SoilSensor<PowerPinNum, DataPinNum> {
+    
+    //  read 
+    /// Momentarily powers the sensor then reads the soil moisture. Then 
+    /// the power will be cut to the sensor to prevent/reduce corrosion.
+    /// Finally the soil moisture is returned. Best practice to call every
+    /// once in a while 
+    fn read(&self) -> u16 {
+        self.power_pin.set_high();
+        delay_ms(10);
+        let output = self.data_pin.analog_read(&mut self.adc);
+        self.power_pin.set_low();
+
+        output
+    }
+}*/
  
 
 #[arduino_hal::entry]
